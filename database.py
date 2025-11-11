@@ -1,18 +1,17 @@
-import sqlite3
+import mysql.connector
+from mysql.connector import Error
 
 def conectar():
-    conn = sqlite3.connect("restaurante.db")
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS platos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            descripcion TEXT,
-            precio REAL NOT NULL,
-            categoria_id INTEGER,
-            imagen TEXT
-    
-    """)
-    conn.commit()
-    return conn
-
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",       
+            user="root",            
+            password="",            
+            database="restaurante"  
+        )
+        if conn.is_connected():
+            print("✅ Conexión exitosa a MySQL/MariaDB")
+            return conn
+    except Error as e:
+        print("❌ Error al conectar:", e)
+        return None

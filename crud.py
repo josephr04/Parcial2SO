@@ -4,6 +4,16 @@ from database import conectar
 # ===============================================
 # CRUD para CATEGORÍAS
 # ===============================================
+
+def obtener_categorias():
+    conn = conectar()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre FROM categorias")
+    categorias = cur.fetchall()
+    conn.close()
+    return categorias
+
+
 def agregar_plato(nombre, descripcion, precio, categoria_id, imagen):
     conn = conectar()
     cur = conn.cursor()
@@ -18,7 +28,17 @@ def agregar_plato(nombre, descripcion, precio, categoria_id, imagen):
 def obtener_platos():
     conn = conectar()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM platos")
+    cur.execute("""
+        SELECT 
+            p.id,
+            p.nombre,
+            p.descripcion,
+            p.precio,
+            c.nombre AS categoria,
+            p.ruta_imagen
+        FROM platos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id
+    """)
     platos = cur.fetchall()
     conn.close()
     return platos
