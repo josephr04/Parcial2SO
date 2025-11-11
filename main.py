@@ -3,7 +3,7 @@ import unicodedata
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import os
-from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato
+from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato, obtener_categorias
 
 COLOR_BG = "#f6f6f6"
 COLOR_ACCENT = "#FF6B6B"
@@ -51,14 +51,34 @@ class RestauranteApp:
         self._add_field(form, "Descripción:", 1)
         self._add_field(form, "Precio:", 2)
 
-        tk.Label(form, text="Imagen:", bg=COLOR_BG, fg=COLOR_TXT).grid(row=3, column=0, sticky="e", pady=5)
+        # Categoría
+        tk.Label(form, text="Categoría:", bg=COLOR_BG, fg=COLOR_TXT).grid(row=3, column=0, sticky="e", pady=5)
+        self.categorias = obtener_categorias()
+        self.categorias_dict = {nombre: id_ for id_, nombre in self.categorias}
+        self.categoria_var = tk.StringVar()
+        self.categoria_cb = ttk.Combobox(form, textvariable=self.categoria_var, values=list(self.categorias_dict.keys()), state="readonly", width=28)
+        self.categoria_cb.grid(row=3, column=1, columnspan=2, pady=5)
+
+        tk.Label(form, text="Imagen:", bg=COLOR_BG, fg=COLOR_TXT).grid(row=4, column=0, sticky="e", pady=5)
         self.imagen_path = tk.StringVar()
-        tk.Entry(form, textvariable=self.imagen_path, width=30).grid(row=3, column=1, pady=5)
-        tk.Button(form, text="Seleccionar", bg=COLOR_BTN, fg="white", bd=0, command=self.seleccionar_imagen).grid(row=3, column=2, padx=5)
+        tk.Entry(form, textvariable=self.imagen_path, width=30).grid(row=4, column=1, pady=5)
+        tk.Button(form, text="Seleccionar", bg=COLOR_BTN, fg="white", bd=0, command=self.seleccionar_imagen).grid(row=4, column=2, padx=5)
 
         # Miniatura
-        self.preview = tk.Label(form, bg="#ddd", width=15, height=5, text="[Sin imagen]")
-        self.preview.grid(row=0, column=3, rowspan=4, padx=10)
+        placeholder = Image.new('RGB', (148, 148), color='#ddd')
+        self.placeholder_img = ImageTk.PhotoImage(placeholder)
+
+        # Miniatura con texto centrado sobre la imagen
+        self.preview = tk.Label(
+            form,
+            bg="#ddd",
+            image=self.placeholder_img,
+            text="Sin imagen",
+            compound="center",  # <-- texto centrado sobre la imagen
+            font=("Arial", 10, "italic"),
+            fg="#555"  # <-- color del texto
+        )
+        self.preview.grid(row=0, column=3, rowspan=5, padx=10, pady=10)
 
         # Botones
         btn_frame = tk.Frame(frame, bg=COLOR_BG)
@@ -71,8 +91,8 @@ class RestauranteApp:
         tk.Button(btn_frame, text="🏠 Menú Principal", bg="#555", fg="white", bd=0, command=self.menu_principal).pack(side="left", padx=10)
 
         # Tabla
-        self.tabla = ttk.Treeview(frame, columns=("ID", "Nombre", "Descripción", "Precio", "Imagen"), show="headings", height=10)
-        for col in ("ID", "Nombre", "Descripción", "Precio", "Imagen"):
+        self.tabla = ttk.Treeview(frame, columns=("ID", "Nombre", "Descripción", "Precio", "Categoría", "Imagen"), show="headings", height=10)
+        for col in ("ID", "Nombre", "Descripción", "Precio", "Categoría", "Imagen"):
             self.tabla.heading(col, text=col)
             self.tabla.column(col, anchor="center", width=140)
         self.tabla.pack(pady=10)
@@ -94,19 +114,33 @@ class RestauranteApp:
         setattr(self, attr_name, entry)
 
     def seleccionar_imagen(self):
-        path = filedialog.askopenfilename(filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg")])
+        path = filedialog.askopenfilename(
+            initialdir="img/platos",  # Abrir directamente en esa carpeta
+            filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg")]
+        )
         if path:
-            self.imagen_path.set(path)
-            self.mostrar_preview(path)
+            # Guardar solo el nombre del archivo
+            filename = os.path.basename(path)
+            self.imagen_path.set(filename)
+            self.mostrar_preview(filename)
 
     def mostrar_preview(self, path):
-        if not os.path.exists(path):
-            self.preview.config(image="", text="[Sin imagen]")
+        if path and not os.path.isabs(path):
+            path = os.path.join("img", "platos", path)
+
+        if not path or not os.path.exists(path):
+            self.preview.config(image=self.placeholder_img, text="Sin imagen")
             return
-        img = Image.open(path)
-        img.thumbnail((120, 120))
-        self.tk_img = ImageTk.PhotoImage(img)
-        self.preview.config(image=self.tk_img, text="")
+
+        try:
+            img = Image.open(path)
+            img = img.resize((150, 150))
+            self.tk_img = ImageTk.PhotoImage(img)
+            self.preview.config(image=self.tk_img, text="")
+            self.preview.image = self.tk_img
+        except Exception as e:
+            self.preview.config(image=self.placeholder_img, text="[Error]")
+            print(f"Error al cargar imagen: {e}")
 
     def cargar_tabla(self):
         for i in self.tabla.get_children():
@@ -120,7 +154,8 @@ class RestauranteApp:
         if not confirmar:
             return
         try:
-            agregar_plato(self.nombre.get(), self.descripcion.get(), float(self.precio.get()), None, self.imagen_path.get())
+            id_categoria = self.categorias_dict.get(self.categoria_var.get())
+            agregar_plato(self.nombre.get(), self.descripcion.get(), float(self.precio.get()), id_categoria, self.imagen_path.get())
             self.cargar_tabla()
             self.limpiar()
             messagebox.showinfo("Éxito", "Plato agregado.")
@@ -136,7 +171,8 @@ class RestauranteApp:
             return
         try:
             id_ = int(self.tabla.item(selected[0])["values"][0])
-            actualizar_plato(id_, self.nombre.get(), self.descripcion.get(), float(self.precio.get()), None, self.imagen_path.get())
+            id_categoria = self.categorias_dict.get(self.categoria_var.get())
+            actualizar_plato(id_, self.nombre.get(), self.descripcion.get(), float(self.precio.get()), id_categoria, self.imagen_path.get())
             self.cargar_tabla()
             self.limpiar()
             messagebox.showinfo("Éxito", "Plato actualizado.")
@@ -158,8 +194,9 @@ class RestauranteApp:
         self.nombre.delete(0, tk.END)
         self.descripcion.delete(0, tk.END)
         self.precio.delete(0, tk.END)
+        self.categoria_var.set("")
         self.imagen_path.set("")
-        self.preview.config(image="", text="[Sin imagen]")
+        self.preview.config(image=self.placeholder_img, text="Sin imagen")
         self.tabla.selection_remove(self.tabla.selection())
 
     def seleccionar_tabla(self, event):
@@ -172,7 +209,8 @@ class RestauranteApp:
             self.descripcion.insert(0, vals[2])
             self.precio.delete(0, tk.END)
             self.precio.insert(0, vals[3])
-            self.imagen_path.set(vals[4] if len(vals) > 4 else "")
+            self.categoria_var.set(vals[4] if len(vals) > 4 else "")
+            self.imagen_path.set(vals[5] if len(vals) > 5 else "")
             self.mostrar_preview(self.imagen_path.get())
 
 # --- INICIO APP ---
