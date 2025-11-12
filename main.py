@@ -1,9 +1,11 @@
 import tkinter as tk
 import unicodedata
+import shutil
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import os
-from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato, obtener_categorias
+from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato, obtener_categorias, existe_plato
+from validaciones import validar_dinero
 
 COLOR_BG = "#f6f6f6"
 COLOR_ACCENT = "#FF6B6B"
@@ -26,11 +28,11 @@ class RestauranteApp:
         tk.Label(self.root, text="🍽️ Restaurante", font=("Helvetica", 24, "bold"), bg=COLOR_BG, fg=COLOR_TXT).pack(pady=30)
 
         tk.Button(self.root, text="📋 Gestión de Platos", font=("Helvetica", 14), bg=COLOR_ACCENT, fg="white",
-                  bd=0, width=25, command=self.ventana_platos).pack(pady=10)
+                  bd=0, width=25, cursor="hand2", command=self.ventana_platos).pack(pady=10)
         tk.Button(self.root, text="📂 Gestión de Categorías", font=("Helvetica", 14), bg=COLOR_BTN, fg="white",
-                  bd=0, width=25, command=lambda: messagebox.showinfo("En desarrollo", "Esta sección está en desarrollo")).pack(pady=10)
+                  bd=0, width=25, cursor="hand2", command=lambda: messagebox.showinfo("En desarrollo", "Esta sección está en desarrollo")).pack(pady=10)
         tk.Button(self.root, text="🖨️ Imprimir", font=("Helvetica", 14), bg="#999", fg="white",
-                  bd=0, width=25, command=lambda: messagebox.showinfo("En desarrollo", "Funcionalidad de impresión en desarrollo")).pack(pady=10)
+                  bd=0, width=25, cursor="hand2", command=lambda: messagebox.showinfo("En desarrollo", "Funcionalidad de impresión en desarrollo")).pack(pady=10)
 
     # --- VENTANA DE PLATOS ---
     def ventana_platos(self):
@@ -46,23 +48,39 @@ class RestauranteApp:
         form = tk.Frame(frame, bg=COLOR_BG)
         form.pack(pady=10)
 
+        vcmd = self.root.register(validar_dinero)
+        
         # Campos
         self._add_field(form, "Nombre:", 0)
         self._add_field(form, "Descripción:", 1)
-        self._add_field(form, "Precio:", 2)
+
+        # Campo de Precio con validación
+        tk.Label(form, text="Precio:", bg=COLOR_BG, fg=COLOR_TXT).grid(
+        row=2, column=0, sticky="e", pady=5)
+        self.precio_var = tk.StringVar()
+        entry_precio = tk.Entry(
+            form, 
+            textvariable=self.precio_var, 
+            width=30,
+            
+            validate="key", 
+            
+            validatecommand=(vcmd, '%P') 
+        )
+        entry_precio.grid(row=2, column=1, columnspan=2, pady=5)
 
         # Categoría
         tk.Label(form, text="Categoría:", bg=COLOR_BG, fg=COLOR_TXT).grid(row=3, column=0, sticky="e", pady=5)
         self.categorias = obtener_categorias()
         self.categorias_dict = {nombre: id_ for id_, nombre in self.categorias}
         self.categoria_var = tk.StringVar()
-        self.categoria_cb = ttk.Combobox(form, textvariable=self.categoria_var, values=list(self.categorias_dict.keys()), state="readonly", width=28)
+        self.categoria_cb = ttk.Combobox(form, textvariable=self.categoria_var, values=list(self.categorias_dict.keys()), state="readonly", width=28, cursor="hand2")
         self.categoria_cb.grid(row=3, column=1, columnspan=2, pady=5)
 
         tk.Label(form, text="Imagen:", bg=COLOR_BG, fg=COLOR_TXT).grid(row=4, column=0, sticky="e", pady=5)
         self.imagen_path = tk.StringVar()
         tk.Entry(form, textvariable=self.imagen_path, width=30).grid(row=4, column=1, pady=5)
-        tk.Button(form, text="Seleccionar", bg=COLOR_BTN, fg="white", bd=0, command=self.seleccionar_imagen).grid(row=4, column=2, padx=5)
+        tk.Button(form, text="Seleccionar", bg=COLOR_BTN, fg="white", cursor="hand2", bd=0, command=self.seleccionar_imagen).grid(row=4, column=2, padx=5)
 
         # Miniatura
         placeholder = Image.new('RGB', (148, 148), color='#ddd')
@@ -84,11 +102,11 @@ class RestauranteApp:
         btn_frame = tk.Frame(frame, bg=COLOR_BG)
         btn_frame.pack(pady=10)
 
-        tk.Button(btn_frame, text="➕ Agregar", bg=COLOR_ACCENT, fg="white", bd=0, command=self.agregar).pack(side="left", padx=10)
-        tk.Button(btn_frame, text="✏️ Actualizar", bg=COLOR_BTN, fg="white", bd=0, command=self.actualizar).pack(side="left", padx=10)
-        tk.Button(btn_frame, text="❌ Eliminar", bg="#E94E77", fg="white", bd=0, command=self.eliminar).pack(side="left", padx=10)
-        tk.Button(btn_frame, text="🧹 Limpiar", bg="#999", fg="white", bd=0, command=self.limpiar).pack(side="left", padx=10)
-        tk.Button(btn_frame, text="🏠 Menú Principal", bg="#555", fg="white", bd=0, command=self.menu_principal).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="➕ Agregar", bg=COLOR_ACCENT, fg="white", cursor="hand2", bd=0, command=self.agregar).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="✏️ Actualizar", bg=COLOR_BTN, fg="white", cursor="hand2", bd=0, command=self.actualizar).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="❌ Eliminar", bg="#E94E77", fg="white", cursor="hand2", bd=0, command=self.eliminar).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="🧹 Limpiar", bg="#999", fg="white", cursor="hand2", bd=0, command=self.limpiar).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="🏠 Menú Principal", bg="#555", fg="white", cursor="hand2", bd=0, command=self.menu_principal).pack(side="left", padx=10)
 
         # Tabla
         self.tabla = ttk.Treeview(frame, columns=("ID", "Nombre", "Descripción", "Precio", "Categoría", "Imagen"), show="headings", height=10)
@@ -114,33 +132,34 @@ class RestauranteApp:
         setattr(self, attr_name, entry)
 
     def seleccionar_imagen(self):
-        path = filedialog.askopenfilename(
-            initialdir="img/platos",  # Abrir directamente en esa carpeta
+        path_origen = filedialog.askopenfilename(
+            initialdir="img/platos", 
             filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg")]
         )
-        if path:
-            # Guardar solo el nombre del archivo
-            filename = os.path.basename(path)
+        
+        if path_origen:
+            self.ruta_imagen_temporal = path_origen 
+            filename = os.path.basename(path_origen)
             self.imagen_path.set(filename)
-            self.mostrar_preview(filename)
+            self.mostrar_preview(path_origen)
 
     def mostrar_preview(self, path):
-        if path and not os.path.isabs(path):
-            path = os.path.join("img", "platos", path)
+            ruta_completa_imagen = path
+            if path and not os.path.isabs(path):
+                ruta_completa_imagen = os.path.join(os.getcwd(), "img", "platos", path)
+            if not ruta_completa_imagen or not os.path.exists(ruta_completa_imagen):
+                self.preview.config(image=self.placeholder_img, text="Sin imagen")
+                return
 
-        if not path or not os.path.exists(path):
-            self.preview.config(image=self.placeholder_img, text="Sin imagen")
-            return
-
-        try:
-            img = Image.open(path)
-            img = img.resize((150, 150))
-            self.tk_img = ImageTk.PhotoImage(img)
-            self.preview.config(image=self.tk_img, text="")
-            self.preview.image = self.tk_img
-        except Exception as e:
-            self.preview.config(image=self.placeholder_img, text="[Error]")
-            print(f"Error al cargar imagen: {e}")
+            try:
+                img = Image.open(ruta_completa_imagen)
+                img = img.resize((150, 150))
+                self.tk_img = ImageTk.PhotoImage(img)
+                self.preview.config(image=self.tk_img, text="")
+                self.preview.image = self.tk_img
+            except Exception as e:
+                self.preview.config(image=self.placeholder_img, text="[Error]")
+                print(f"Error al cargar imagen: {e}")
 
     def cargar_tabla(self):
         for i in self.tabla.get_children():
@@ -150,50 +169,146 @@ class RestauranteApp:
 
     # --- CRUD ---
     def agregar(self):
-        confirmar = messagebox.askokcancel("Confirmar", "¿Deseas agregar este plato?")
-        if not confirmar:
-            return
-        try:
-            id_categoria = self.categorias_dict.get(self.categoria_var.get())
-            agregar_plato(self.nombre.get(), self.descripcion.get(), float(self.precio.get()), id_categoria, self.imagen_path.get())
-            self.cargar_tabla()
-            self.limpiar()
-            messagebox.showinfo("Éxito", "Plato agregado.")
-        except ValueError:
-            messagebox.showerror("Error", "Precio inválido.")
+            nombre = self.nombre.get().strip()
+            descripcion = self.descripcion.get().strip()
+            precio_str = self.precio_var.get().strip()
+            categoria = self.categoria_var.get()
+            imagen = self.imagen_path.get()
+            
+            if not nombre or not descripcion or not precio_str or not categoria or not imagen:
+                messagebox.showerror("Error de Validación", "Por favor, complete todos los campos.")
+                return
+            
+            if existe_plato(nombre):
+                messagebox.showerror("Error de Duplicado", "Este plato ya existe.")
+                return
+                
+            if not hasattr(self, 'ruta_imagen_temporal') or not self.ruta_imagen_temporal:
+                messagebox.showerror("Error de Imagen", "Por favor, seleccione una imagen válida.")
+                return
+                
+            confirmar = messagebox.askokcancel("Confirmar", "¿Deseas agregar este plato?")
+            if not confirmar:
+                return
+                
+            try:
+                CARPETA_DESTINO = os.path.join(os.getcwd(), "img", "platos")
+                os.makedirs(CARPETA_DESTINO, exist_ok=True)
+                path_destino = os.path.join(CARPETA_DESTINO, imagen)
+                
+                shutil.copy2(self.ruta_imagen_temporal, path_destino) 
+                
+                precio_float = float(precio_str) 
+                id_categoria = self.categorias_dict.get(categoria)
+                agregar_plato(nombre, descripcion, precio_float, id_categoria, imagen)
+                
+                self.ruta_imagen_temporal = None
+                self.cargar_tabla()
+                self.limpiar()
+                messagebox.showinfo("Éxito", "Plato agregado.")
+                
+            except ValueError:
+                messagebox.showerror("Error", "El valor del Precio no es un número válido.")
+            except Exception as e:
+                messagebox.showerror("Error de Archivo", f"Error al guardar la imagen o conectar con DB: {e}")
 
     def actualizar(self):
         selected = self.tabla.selection()
         if not selected:
-            return messagebox.showwarning("Aviso", "Selecciona un plato.")
+            messagebox.showwarning("Aviso", "Selecciona un plato para actualizar.")
+            return
+
+        # --- Obtener datos del formulario ---
+        nombre = self.nombre.get().strip()
+        descripcion = self.descripcion.get().strip()
+        precio_str = self.precio_var.get().strip()
+        categoria = self.categoria_var.get()
+        imagen = self.imagen_path.get()
+
+        # --- Validaciones ---
+        if not nombre or not descripcion or not precio_str or not categoria or not imagen:
+            messagebox.showerror("Error de Validación", "Por favor, complete todos los campos.")
+            return
+
+        try:
+            precio_float = float(precio_str)
+        except ValueError:
+            messagebox.showerror("Error", "El valor del Precio no es un número válido.")
+            return
+
         confirmar = messagebox.askokcancel("Confirmar", "¿Deseas actualizar este plato?")
         if not confirmar:
             return
+
         try:
+            # --- ID del plato seleccionado ---
             id_ = int(self.tabla.item(selected[0])["values"][0])
-            id_categoria = self.categorias_dict.get(self.categoria_var.get())
-            actualizar_plato(id_, self.nombre.get(), self.descripcion.get(), float(self.precio.get()), id_categoria, self.imagen_path.get())
+            id_categoria = self.categorias_dict.get(categoria)
+
+            # --- Carpeta donde se guardan las imágenes ---
+            CARPETA_DESTINO = os.path.join(os.getcwd(), "img", "platos")
+            os.makedirs(CARPETA_DESTINO, exist_ok=True)
+            path_destino = os.path.join(CARPETA_DESTINO, imagen)
+
+            # --- Si el usuario seleccionó una nueva imagen temporal ---
+            if hasattr(self, 'ruta_imagen_temporal') and self.ruta_imagen_temporal:
+                # Borrar imagen anterior si existe
+                datos_actuales = self.tabla.item(selected[0])["values"]
+                imagen_anterior = datos_actuales[5]  # columna "Imagen"
+                path_imagen_anterior = os.path.join(CARPETA_DESTINO, imagen_anterior)
+                if os.path.exists(path_imagen_anterior):
+                    try:
+                        os.remove(path_imagen_anterior)
+                    except Exception as e:
+                        print(f"No se pudo eliminar la imagen anterior: {e}")
+
+                # Copiar la nueva imagen
+                shutil.copy2(self.ruta_imagen_temporal, path_destino)
+                self.ruta_imagen_temporal = None
+
+            # --- Actualizar datos en la base de datos ---
+            actualizar_plato(id_, nombre, descripcion, precio_float, id_categoria, imagen)
+
+            # --- Refrescar tabla y limpiar formulario ---
             self.cargar_tabla()
             self.limpiar()
-            messagebox.showinfo("Éxito", "Plato actualizado.")
+
+            messagebox.showinfo("Éxito", "Plato actualizado correctamente.")
+
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", f"Ocurrió un problema al actualizar el plato:\n{e}")
+
 
     def eliminar(self):
-        selected = self.tabla.selection()
-        if not selected:
-            return messagebox.showwarning("Aviso", "Selecciona un plato.")
-        id_ = int(self.tabla.item(selected[0])["values"][0])
-        if messagebox.askyesno("Confirmar", "¿Eliminar este plato?"):
-            eliminar_plato(id_)
-            self.cargar_tabla()
-            self.limpiar()
-            messagebox.showinfo("Eliminado", "Plato eliminado.")
+            selected = self.tabla.selection()
+            if not selected:
+                return messagebox.showwarning("Aviso", "Selecciona un plato.")
+            
+            vals = self.tabla.item(selected[0])["values"]
+            id_ = int(vals[0])
+            imagen_filename = str(vals[5])
+            
+            if messagebox.askyesno("Confirmar", "¿Eliminar este plato?"):
+                try:
+                    eliminar_plato(id_)
+                    if imagen_filename:
+                        CARPETA_IMAGENES = os.path.join(os.getcwd(), "img", "platos")
+                        path_completo_imagen = os.path.join(CARPETA_IMAGENES, imagen_filename)
+                        if os.path.exists(path_completo_imagen):
+                            os.remove(path_completo_imagen)
+                        else:
+                            print(f"Advertencia: El archivo de imagen '{imagen_filename}' no se encontró localmente.")
+                    self.cargar_tabla()
+                    self.limpiar()
+                    messagebox.showinfo("Eliminado", "Plato eliminado.")
+                
+                except Exception as e:
+                    messagebox.showerror("Error", f"Ocurrió un error al eliminar: {e}")
 
     def limpiar(self):
         self.nombre.delete(0, tk.END)
         self.descripcion.delete(0, tk.END)
-        self.precio.delete(0, tk.END)
+        self.precio_var.set("")
         self.categoria_var.set("")
         self.imagen_path.set("")
         self.preview.config(image=self.placeholder_img, text="Sin imagen")
@@ -207,8 +322,7 @@ class RestauranteApp:
             self.nombre.insert(0, vals[1])
             self.descripcion.delete(0, tk.END)
             self.descripcion.insert(0, vals[2])
-            self.precio.delete(0, tk.END)
-            self.precio.insert(0, vals[3])
+            self.precio_var.set(vals[3])
             self.categoria_var.set(vals[4] if len(vals) > 4 else "")
             self.imagen_path.set(vals[5] if len(vals) > 5 else "")
             self.mostrar_preview(self.imagen_path.get())
