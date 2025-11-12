@@ -4,7 +4,7 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import os
 from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato
-
+from Categoria import CategoriaGUI
 COLOR_BG = "#f6f6f6"
 COLOR_ACCENT = "#FF6B6B"
 COLOR_BTN = "#4ECDC4"
@@ -28,7 +28,7 @@ class RestauranteApp:
         tk.Button(self.root, text="📋 Gestión de Platos", font=("Helvetica", 14), bg=COLOR_ACCENT, fg="white",
                   bd=0, width=25, command=self.ventana_platos).pack(pady=10)
         tk.Button(self.root, text="📂 Gestión de Categorías", font=("Helvetica", 14), bg=COLOR_BTN, fg="white",
-                  bd=0, width=25, command=lambda: messagebox.showinfo("En desarrollo", "Esta sección está en desarrollo")).pack(pady=10)
+                  bd=0, width=25, command=self.ventana_categorias).pack(pady=10)
         tk.Button(self.root, text="🖨️ Imprimir", font=("Helvetica", 14), bg="#999", fg="white",
                   bd=0, width=25, command=lambda: messagebox.showinfo("En desarrollo", "Funcionalidad de impresión en desarrollo")).pack(pady=10)
 
@@ -79,6 +79,14 @@ class RestauranteApp:
         self.tabla.bind("<<TreeviewSelect>>", self.seleccionar_tabla)
 
         self.cargar_tabla()
+
+    # --- VENTANA DE CATEGORÍAS ---
+    def ventana_categorias(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        self.root.geometry("650x450")
+        CategoriaGUI(self.root, on_back=self.menu_principal)
 
     # --- FUNCIONES AUXILIARES ---
     def _add_field(self, parent, label, row):
