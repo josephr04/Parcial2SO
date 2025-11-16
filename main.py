@@ -7,16 +7,17 @@ import os
 from crud import agregar_plato, obtener_platos, actualizar_plato, eliminar_plato, obtener_categorias, existe_plato
 from validaciones import validar_dinero
 from Categoria import CategoriaGUI
-COLOR_BG = "#f6f6f6"
-COLOR_ACCENT = "#FF6B6B"
-COLOR_BTN = "#4ECDC4"
+COLOR_BG = "#f4f6f5"
+COLOR_ACCENT = "#ff825a"
+COLOR_BTN = "#14b0ab"
+COLOR_IMP = "#2d3741"
 COLOR_TXT = "#333"
 
 class RestauranteApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🍴 Restaurante App")
-        self.root.geometry("600x400")
+        self.root.geometry("900x600")
         self.root.config(bg=COLOR_BG)
         self.menu_principal()
 
@@ -30,8 +31,8 @@ class RestauranteApp:
         tk.Button(self.root, text="📋 Gestión de Platos", font=("Helvetica", 14), bg=COLOR_ACCENT, fg="white",
                   bd=0, width=25, cursor="hand2", command=self.ventana_platos).pack(pady=10)
         tk.Button(self.root, text="📂 Gestión de Categorías", font=("Helvetica", 14), bg=COLOR_BTN, fg="white",
-                  bd=0, width=25, command=self.ventana_categorias).pack(pady=10)
-        tk.Button(self.root, text="🖨️ Imprimir", font=("Helvetica", 14), bg="#999", fg="white",
+                  bd=0, width=25, cursor="hand2", command=self.ventana_categorias).pack(pady=10)
+        tk.Button(self.root, text="🖨️ Imprimir", font=("Helvetica", 14), bg=COLOR_IMP, fg="white",
                   bd=0, width=25, cursor="hand2", command=lambda: messagebox.showinfo("En desarrollo", "Funcionalidad de impresión en desarrollo")).pack(pady=10)
 
     # --- VENTANA DE PLATOS ---
