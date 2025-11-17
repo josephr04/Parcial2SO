@@ -1,8 +1,12 @@
 """
 Módulo para imprimir el menú del restaurante
 """
+import platform
 import win32print
 import win32ui
+if platform.system() == "Windows":
+    import win32print
+    import win32ui
 from PIL import Image, ImageDraw, ImageFont, ImageWin
 from database import conectar
 import tempfile
@@ -121,65 +125,79 @@ def crear_imagen_menu(menu_dict, nombre_restaurante="🍽️ Restaurante"):
 
 def imprimir_menu(nombre_restaurante="Restaurante"):
     """
-    Imprime el menú del restaurante
+    Imprime el menú del restaurante (Windows y Linux)
     """
     try:
-        # Obtener datos del menú
         menu_dict = obtener_platos_por_categoria()
-        
         if not menu_dict:
             return False, "No hay platos en el menú para imprimir"
-        
-        # Crear imagen del menú
+
+        # Crear imagen a imprimir
         img = crear_imagen_menu(menu_dict, nombre_restaurante)
-        
-        # Guardar temporalmente
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.bmp')
+
+        # Guardar en archivo temporal como PDF o PNG
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
         temp_path = temp_file.name
         temp_file.close()
-        
-        img.save(temp_path)
-        
-        # Obtener impresora predeterminada
-        printer_name = win32print.GetDefaultPrinter()
-        
-        # Configurar impresión
-        hDC = win32ui.CreateDC()
-        hDC.CreatePrinterDC(printer_name)
-        hDC.StartDoc("Menú del Restaurante")
-        hDC.StartPage()
-        
-        # Cargar imagen
-        bmp = Image.open(temp_path)
-        
-        # Obtener dimensiones de la página de impresión
-        printer_width = hDC.GetDeviceCaps(110)  # PHYSICALWIDTH
-        printer_height = hDC.GetDeviceCaps(111)  # PHYSICALHEIGHT
-        
-        # Calcular escala para ajustar a la página
-        scale = min(printer_width / bmp.size[0], printer_height / bmp.size[1])
-        
-        # Calcular nueva dimensión
-        new_width = int(bmp.size[0] * scale)
-        new_height = int(bmp.size[1] * scale)
-        
-        # Centrar en la página
-        x = (printer_width - new_width) // 2
-        y = (printer_height - new_height) // 2
-        
-        # Convertir a formato compatible con Windows
-        dib = ImageWin.Dib(bmp)
-        dib.draw(hDC.GetHandleOutput(), (x, y, x + new_width, y + new_height))
-        
-        hDC.EndPage()
-        hDC.EndDoc()
-        hDC.DeleteDC()
-        
+
+        # Guardar imagen como PDF
+        img.save(temp_path, "PDF")
+
+        # Detectar Windows vs Linux
+        sistema = platform.system()
+
+        # ==============================
+        #       IMPRESIÓN EN WINDOWS
+        # ==============================
+        if sistema == "Windows":
+            printer_name = win32print.GetDefaultPrinter()
+
+            hDC = win32ui.CreateDC()
+            hDC.CreatePrinterDC(printer_name)
+            hDC.StartDoc("Menú del Restaurante")
+            hDC.StartPage()
+
+            bmp = Image.open(temp_path)
+            dib = ImageWin.Dib(bmp)
+
+            printer_width = hDC.GetDeviceCaps(110)
+            printer_height = hDC.GetDeviceCaps(111)
+
+            scale = min(printer_width / bmp.size[0], printer_height / bmp.size[1])
+            new_width = int(bmp.size[0] * scale)
+            new_height = int(bmp.size[1] * scale)
+
+            x = (printer_width - new_width) // 2
+            y = (printer_height - new_height) // 2
+
+            dib.draw(hDC.GetHandleOutput(), (x, y, x + new_width, y + new_height))
+
+            hDC.EndPage()
+            hDC.EndDoc()
+            hDC.DeleteDC()
+
+        # ==============================
+        #        IMPRESIÓN EN LINUX
+        # ==============================
+        else:
+            import cups
+            conn = cups.Connection()
+
+            printers = conn.getPrinters()
+            if not printers:
+                return False, "No hay impresoras disponibles en Linux"
+
+            # Usa la primera impresora encontrada
+            printer = list(printers.keys())[0]
+
+            # Enviar PDF a la impresora
+            conn.printFile(printer, temp_path, "Menú del Restaurante", {})
+
         # Eliminar archivo temporal
         os.unlink(temp_path)
-        
-        return True
-        
+
+        return True, "Impresión enviada correctamente"
+
     except Exception as e:
         return False, f"Error al imprimir: {str(e)}"
 
