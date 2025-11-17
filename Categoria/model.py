@@ -99,6 +99,64 @@ def eliminar_categoria(id_):
 		cur.close()
 		conn.close()
 
+
+from database import conectar
+
+def obtener_categorias():
+    """Obtiene todas las categorías"""
+    conn = conectar()
+    if not conn:
+        return []
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, nombre, ruta_imagen FROM categorias")
+    categorias = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return categorias
+
+def crear_categoria(nombre, ruta_imagen):
+    """Crea una nueva categoría"""
+    conn = conectar()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO categorias (nombre, ruta_imagen) VALUES (%s, %s)",
+        (nombre, ruta_imagen)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def actualizar_categoria(id_, nombre, ruta_imagen):
+    """Actualiza una categoría existente"""
+    conn = conectar()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE categorias SET nombre=%s, ruta_imagen=%s WHERE id=%s",
+        (nombre, ruta_imagen, id_)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def categoria_tiene_platos(id_):
+    """Verifica si una categoría tiene platos asociados"""
+    conn = conectar()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM platos WHERE id_categoria = %s",
+        (id_,)
+    )
+    cantidad = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    return cantidad > 0
+
 # Inicializar tabla al importar el módulo (silencioso en errores de conexión)
 try:
 	init_db()

@@ -10,7 +10,6 @@ def conectar():
             database="restaurante"  
         )
         if conn.is_connected():
-            print("Conexión exitosa a MySQL/MariaDB")
             return conn
     except Error as e:
         print("Error al conectar:", e)

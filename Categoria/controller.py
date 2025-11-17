@@ -25,3 +25,6 @@ def actualizar_categoria(id_, nombre, ruta_imagen=None):
 
 def eliminar_categoria(id_):
 	return model.eliminar_categoria(id_)
+
+def categoria_tiene_platos(id_):
+	return model.categoria_tiene_platos(id_)

@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import customtkinter as ctk
 import os
 import shutil
 import mysql.connector
 from PIL import Image, ImageTk
 from . import controller
 
-COLOR_BG = "#f5f5f5"
+COLOR_BG = "#f9f9f9"
 COLOR_BTN = "#4ECDC4"
 COLOR_ACC = "#FF6B6B"
 
@@ -16,12 +17,19 @@ class CategoriaGUI:
     def __init__(self, root, on_back=None):
         self.root = root
         self.on_back = on_back
-        self.root.title("Gestión de Categorías")
+        self.titulo_anterior = self.root.title()
+
+        self.root.title("📂 Gestión de Categorías")
         self.root.geometry("900x600")
-        self.root.config(bg=COLOR_BG)
 
         self._build_ui()
         self.cargar_categorias()
+
+    def volver(self):
+        self.root.title(self.titulo_anterior)
+        
+        if self.on_back:
+            self.on_back()
 
     def _build_ui(self):
 
@@ -29,24 +37,54 @@ class CategoriaGUI:
         spacer = tk.Frame(self.root, bg=COLOR_BG, height=40)
         spacer.pack()
 
-        header = tk.Label(self.root, text="Categorías del Menú", font=(None, 18, "bold"), bg=COLOR_BG)
+        header = tk.Label(self.root, text="Gestión de Categorías", font=("Helvetica", 25, "bold"), fg="#333", bg=COLOR_BG)
         header.pack(pady=20)  # aumentado
 
         form = tk.Frame(self.root, bg=COLOR_BG)
         form.pack(pady=15)  # aumentado
 
-        tk.Label(form, text="Nombre:", bg=COLOR_BG).grid(row=0, column=0, sticky="e", padx=5, pady=10)
-        self.entry_nombre = tk.Entry(form, width=40)
+        tk.Label(form, text="Nombre:", bg=COLOR_BG, anchor="w", font=("Inter", 12)).grid(row=0, column=0, sticky="w", padx=5, pady=10)
+        self.entry_nombre = ctk.CTkEntry(
+            form,
+            height=21,
+            width=185,
+            border_width=1,
+            border_color="#A2A2A2",
+            corner_radius=0,
+            fg_color="#ffffff",
+            text_color="black",
+        )
         self.entry_nombre.grid(row=0, column=1, pady=10)
 
-        tk.Label(form, text="Imagen:", bg=COLOR_BG).grid(row=1, column=0, sticky="e", padx=5, pady=10)
+        tk.Label(form, text="Imagen:", bg=COLOR_BG, anchor="w", font=("Inter", 12)).grid(row=1, column=0, sticky="w", padx=5, pady=10)
         self.imagen_path = tk.StringVar()
-        tk.Entry(form, textvariable=self.imagen_path, width=30).grid(row=1, column=1, sticky="w", pady=10)
-        tk.Button(form, text="Seleccionar", bg=COLOR_BTN, fg="white", bd=0, 
-                  command=self.seleccionar_imagen).grid(row=1, column=2, padx=5)
+        ctk.CTkEntry(
+            form,
+            textvariable=self.imagen_path,
+            height=21,
+            width=185,
+            border_width=1,
+            border_color="#A2A2A2",
+            corner_radius=0,
+            fg_color="#ffffff",
+            text_color="black",
+            placeholder_text="Ruta de la imagen..."
+        ).grid(row=1, column=1, sticky="w", pady=10)
+        
+        ctk.CTkButton(form, 
+            text="Seleccionar",
+            font=("Inter", 12, "bold"),
+            fg_color=COLOR_BTN,
+            hover_color="#119b97",
+            text_color="white",
+            corner_radius=6,    
+            width=80,
+            height=22,
+            cursor="hand2",
+            command=self.seleccionar_imagen).grid(row=1, column=2, padx=5)
 
         # Preview
-        placeholder = Image.new('RGB', (148, 148), color='#ddd')
+        placeholder = Image.new('RGB', (248, 188), color='#ddd')
         self.placeholder_img = ImageTk.PhotoImage(placeholder)
 
         # Miniatura con texto centrado sobre la imagen
@@ -56,7 +94,7 @@ class CategoriaGUI:
             image=self.placeholder_img,
             text="Sin imagen",
             compound="center",  # <-- texto centrado sobre la imagen
-            font=("Arial", 10, "italic"),
+            font=("Arial", 12, "italic"),
             fg="#555"  # <-- color del texto
         )
         self.preview.grid(row=0, column=3, rowspan=5, padx=10, pady=10)
@@ -65,26 +103,95 @@ class CategoriaGUI:
         btn_frame = tk.Frame(self.root, bg=COLOR_BG)
         btn_frame.pack(pady=0)  # aumentado
 
-        tk.Button(btn_frame, text="➕ Agregar", bg=COLOR_ACC, fg="white", bd=0, width=12,
-                  command=self.agregar).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="✏️ Actualizar", bg=COLOR_BTN, fg="white", bd=0, width=12,
-                  command=self.actualizar).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="❌ Eliminar", bg="#E94E77", fg="white", bd=0, width=12,
-                  command=self.eliminar).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="🧹 Limpiar", bg="#999", fg="white", bd=0, width=12,
-                  command=self.limpiar).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, 
+                 text="➕ Agregar",
+                 font=("Helvetica", 13, "bold"),
+                 fg_color='#ff825a',
+                 hover_color="#e6734d",
+                 text_color="white",
+                 corner_radius=6,
+                 width=80,
+                 height=22,
+                 cursor="hand2",
+                 command=self.agregar).pack(side="left", padx=8)   
+             
+        ctk.CTkButton(btn_frame, 
+                text="✏️ Actualizar",
+                font=("Helvetica", 13, "bold"),
+                fg_color=COLOR_BTN,
+                hover_color="#119b97",
+                text_color="white",
+                corner_radius=6,
+                width=80,
+                height=22,
+                cursor="hand2",
+                command=self.actualizar).pack(side="left", padx=8)
+            
+        ctk.CTkButton(btn_frame, 
+                    text="❌ Eliminar",
+                    font=("Helvetica", 13, "bold"),
+                    fg_color="#E94E77",
+                    hover_color="#d63860",
+                    text_color="white",
+                    corner_radius=6,
+                    width=80,
+                    height=22,
+                    cursor="hand2",
+                    command=self.eliminar).pack(side="left", padx=8)
+        
+        ctk.CTkButton(btn_frame, 
+                    text="🧹 Limpiar",
+                    font=("Helvetica", 13, "bold"),
+                    fg_color="#999",
+                    hover_color="#777",
+                    text_color="white",
+                    corner_radius=6,
+                    width=80,
+                    height=22,
+                    cursor="hand2",
+                    command=self.limpiar).pack(side="left", padx=8)
+        
         if self.on_back:
-            tk.Button(btn_frame, text="🏠 Menú Principal", bg="#555", fg="white", bd=0, width=14,
-                      command=self.on_back).pack(side="left", padx=8)
+            ctk.CTkButton(btn_frame, 
+                text="🏠 Menú Principal",
+                font=("Helvetica", 13, "bold"),
+                fg_color="#555",
+                hover_color="#333",
+                text_color="white",
+                corner_radius=6,
+                width=80,
+                height=22,
+                cursor="hand2",
+                command=self.volver).pack(side="left", padx=8)
 
-        # Tabla
+        # Crear un estilo para la tabla
+        estilo = ttk.Style()
+        estilo.configure("Treeview", 
+                        font=('Inter', 12),  # Fuente para las filas
+                        rowheight=30)        # Altura de las filas
+
+        estilo.configure("Treeview.Heading", 
+                        font=('Inter', 13, 'bold'),
+                        foreground="#333")  # Fuente para los encabezados
+
+        estilo.map('Treeview',
+                background=[('selected', "#9D9D9E")],  # Color de fondo al seleccionar
+                foreground=[('selected', '#FFFFFF')])   # Color de texto al seleccionar
+
         cols = ("ID", "Nombre", "Imagen")
         self.tree = ttk.Treeview(self.root, columns=cols, show="headings", height=10)
-        for c in cols:
-            self.tree.heading(c, text=c)
-            self.tree.column(c, anchor="center")
 
-        self.tree.pack(padx=30, pady=40, fill="both", expand=True)  # aumentado
+        # Configurar cada columna con encabezados y tamaños
+        self.tree.heading("ID", text="ID")
+        self.tree.column("ID", anchor="center", width=100, minwidth=80)
+
+        self.tree.heading("Nombre", text="Nombre")
+        self.tree.column("Nombre", anchor="center", width=300, minwidth=150)
+
+        self.tree.heading("Imagen", text="Imagen")
+        self.tree.column("Imagen", anchor="center", width=350, minwidth=150)
+
+        self.tree.pack(padx=80, pady=(20, 50), fill="both", expand=True)
         self.tree.bind("<<TreeviewSelect>>", self.seleccionar)
 
     def seleccionar_imagen(self):
@@ -109,7 +216,7 @@ class CategoriaGUI:
 
             try:
                 img = Image.open(ruta_completa_imagen)
-                img = img.resize((150, 150))
+                img = img.resize((250, 190))
                 self.tk_img = ImageTk.PhotoImage(img)
                 self.preview.config(image=self.tk_img, text="")
                 self.preview.image = self.tk_img
@@ -208,6 +315,10 @@ class CategoriaGUI:
         id_ = item[0]
         imagen_filename = str(item[2])
 
+        if controller.categoria_tiene_platos(id_):
+            messagebox.showerror("Error de Eliminacion", "Esta categoría tiene platos asociados. Elimine o reasigne los platos primero.")
+            return
+        
         if not messagebox.askyesno("Confirmar", "¿Eliminar esta categoría?"):
             return
         try:
