@@ -2,12 +2,18 @@
 Módulo para imprimir el menú del restaurante
 """
 import platform
-import win32print
-import win32ui
 if platform.system() == "Windows":
     import win32print
     import win32ui
-from PIL import Image, ImageDraw, ImageFont, ImageWin
+else:
+    win32print = None  # Evita errores
+from PIL import Image as PILImage, ImageDraw, ImageFont, ImageWin
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
 from database import conectar
 import tempfile
 import os
@@ -49,7 +55,7 @@ def crear_imagen_menu(menu_dict, nombre_restaurante="🍽️ Restaurante"):
     width, height = 2480, 3508
     
     # Crear imagen
-    img = Image.new('RGB', (width, height), 'white')
+    img = PILImage.new('RGB', (width, height), 'white')
     draw = ImageDraw.Draw(img)
     
     # Intentar cargar fuentes
@@ -157,7 +163,7 @@ def imprimir_menu(nombre_restaurante="Restaurante"):
             hDC.StartDoc("Menú del Restaurante")
             hDC.StartPage()
 
-            bmp = Image.open(temp_path)
+            bmp = PILImage.open(temp_path)
             dib = ImageWin.Dib(bmp)
 
             printer_width = hDC.GetDeviceCaps(110)
@@ -214,9 +220,193 @@ def vista_previa_menu(nombre_restaurante="🍽️ Restaurante"):
         img = crear_imagen_menu(menu_dict, nombre_restaurante)
         
         # Redimensionar para vista previa (más pequeño)
-        img.thumbnail((800, 1131), Image.Resampling.LANCZOS)
+        img.thumbnail((800, 1131), PILImage.Resampling.LANCZOS)
         
         return img, "Vista previa generada"
         
     except Exception as e:
         return None, f"Error al generar vista previa: {str(e)}"
+    
+def guardar_menu_pdf(titulo, ruta_archivo):
+    """
+    Guarda el menú en un archivo PDF con diseño atractivo
+    
+    Args:
+        titulo: Título del menú
+        ruta_archivo: Ruta completa donde guardar el PDF
+    
+    Returns:
+        tuple: (éxito, mensaje)
+    """
+    try:
+        # Obtener platos organizados por categoría directamente desde la BD
+        menu_dict = obtener_platos_por_categoria()
+        
+        if not menu_dict:
+            return False, "No hay platos para incluir en el menú"
+        
+        # Crear el documento PDF
+        doc = SimpleDocTemplate(
+            ruta_archivo,
+            pagesize=letter,
+            rightMargin=50,
+            leftMargin=50,
+            topMargin=50,
+            bottomMargin=30
+        )
+        
+        # Contenedor para los elementos
+        elementos = []
+        
+        # Estilos personalizados
+        estilos = getSampleStyleSheet()
+        
+        # Estilo para el título principal
+        estilo_titulo = ParagraphStyle(
+            'CustomTitle',
+            parent=estilos['Heading1'],
+            fontSize=32,
+            textColor=colors.HexColor('#2c3e50'),
+            spaceAfter=20,
+            spaceBefore=10,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Estilo para categorías
+        estilo_categoria = ParagraphStyle(
+            'CustomCategory',
+            parent=estilos['Heading2'],
+            fontSize=18,
+            textColor=colors.HexColor('#2980b9'),
+            spaceAfter=15,
+            spaceBefore=25,
+            fontName='Helvetica-Bold',
+            leftIndent=10
+        )
+        
+        # Título principal del menú
+        elementos.append(Paragraph(f"{titulo}", estilo_titulo))
+        
+        # Línea decorativa debajo del título
+        line = Table([['']], colWidths=[7*inch])
+        line.setStyle(TableStyle([
+            ('LINEABOVE', (0, 0), (-1, 0), 3, colors.HexColor('#3498db')),
+            ('TOPPADDING', (0, 0), (-1, -1), 15),
+        ]))
+        elementos.append(line)
+        elementos.append(Spacer(1, 0.2*inch))
+        
+        # Generar contenido por categoría
+        for categoria, platos in menu_dict.items():
+            # Título de categoría con bullet point
+            elementos.append(Paragraph(f"{categoria.upper()}", estilo_categoria))
+            
+            # Crear datos para la tabla de platos
+            datos_tabla = []
+            
+            for plato in platos:
+                nombre = plato['nombre']
+                descripcion = plato['descripcion'] if plato['descripcion'] else ""
+                
+                # Convertir precio a float si es string
+                try:
+                    precio_valor = float(plato['precio']) if plato['precio'] else 0.0
+                    precio = f"${precio_valor:.2f}"
+                except (ValueError, TypeError):
+                    precio = f"${plato['precio']}"
+                
+                # Crear el estilo para nombre del plato
+                estilo_plato = ParagraphStyle(
+                    'Plato',
+                    parent=estilos['Normal'],
+                    fontSize=11,
+                    textColor=colors.HexColor('#34495e'),
+                    fontName='Helvetica-Bold'
+                )
+                
+                # Crear el estilo para descripción
+                estilo_desc = ParagraphStyle(
+                    'Descripcion',
+                    parent=estilos['Normal'],
+                    fontSize=9,
+                    textColor=colors.HexColor('#7f8c8d'),
+                    fontName='Helvetica'
+                )
+                
+                # Crear el estilo para precio
+                estilo_precio = ParagraphStyle(
+                    'Precio',
+                    parent=estilos['Normal'],
+                    fontSize=11,
+                    textColor=colors.HexColor('#27ae60'),
+                    fontName='Helvetica-Bold',
+                    alignment=2  # Alineación derecha
+                )
+                
+                # Construir la celda con nombre y descripción
+                if descripcion:
+                    contenido_plato = f"<b>{nombre}</b><br/><font size=8 color='#7f8c8d'>{descripcion[:80]}{'...' if len(descripcion) > 80 else ''}</font>"
+                else:
+                    contenido_plato = f"<b>{nombre}</b>"
+                
+                datos_tabla.append([
+                    Paragraph(contenido_plato, estilos['Normal']),
+                    Paragraph(precio, estilo_precio)
+                ])
+            
+            # Crear tabla de platos
+            tabla = Table(datos_tabla, colWidths=[5*inch, 1.2*inch])
+            tabla.setStyle(TableStyle([
+                # Bordes y líneas
+                ('LINEBELOW', (0, 0), (-1, -1), 0.5, colors.HexColor('#ecf0f1')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                
+                # Padding
+                ('LEFTPADDING', (0, 0), (0, -1), 20),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+                ('TOPPADDING', (0, 0), (-1, -1), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+                
+                # Alineación
+                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                
+                # Fondo alternado para mejor lectura
+                ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+            ]))
+            
+            elementos.append(tabla)
+            elementos.append(Spacer(1, 0.15*inch))
+        
+        # Construir PDF
+        doc.build(elementos)
+        
+        return True, "PDF guardado correctamente"
+        
+    except ImportError as e:
+        return False, f"Falta instalar reportlab: pip install reportlab\nError: {str(e)}"
+    except Exception as e:
+        return False, f"Error al generar PDF: {str(e)}"
+
+def abrir_pdf(ruta_archivo):
+    """
+    Abre el PDF generado con el visor predeterminado del sistema
+    Compatible con Windows y Linux
+    
+    Args:
+        ruta_archivo: Ruta del archivo PDF a abrir
+    """
+    try:
+        sistema = platform.system()
+        
+        if sistema == "Windows":
+            os.startfile(ruta_archivo)
+        elif sistema == "Linux":
+            os.system(f'xdg-open "{ruta_archivo}"')
+        elif sistema == "Darwin":  # macOS
+            os.system(f'open "{ruta_archivo}"')
+        else:
+            print(f"Sistema operativo no soportado: {sistema}")
+            
+    except Exception as e:
+        print(f"Error al abrir PDF: {str(e)}")

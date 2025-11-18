@@ -12,8 +12,8 @@ from Categoria import CategoriaGUI
 from Imprimir.imprimir_menu import imprimir_menu, vista_previa_menu
 
 COLOR_BG = "#f9f9f9"
-COLOR_ACCENT = "#ff825a"
-COLOR_BTN = "#14b0ab"
+COLOR_ACCENT = "#FF6B6B"
+COLOR_BTN = "#4ECDC4"
 COLOR_IMP = "#2d3741"
 COLOR_TXT = "#333"
 FUENTE_TXT = "Inter" 
@@ -115,7 +115,7 @@ class RestauranteApp:
         ventana = tk.Toplevel(self.root)
         ventana.title("Imprimir Menú")
         ventana.geometry("900x700")
-   
+
         ancho, alto = 900, 750
         x = (ventana.winfo_screenwidth() // 2) - (ancho // 2) + 110
         y = (ventana.winfo_screenheight() // 2) - (alto // 2)
@@ -173,7 +173,7 @@ class RestauranteApp:
         
         # Botón imprimir
         ctk.CTkButton(button_frame, 
-            text="🖨️Imprimir",
+            text="🖨️ Imprimir",
             font=(FUENTE_TXT, 15, "bold"),
             fg_color="#27ae60",
             hover_color="#229954",
@@ -183,6 +183,19 @@ class RestauranteApp:
             height=30,
             cursor="hand2",
             command=lambda: self.ejecutar_impresion()).pack(side="left", padx=10)
+        
+        # Botón guardar PDF
+        ctk.CTkButton(button_frame, 
+            text="📄 Guardar en PDF",
+            font=(FUENTE_TXT, 15, "bold"),
+            fg_color="#3498db",
+            hover_color="#2980b9",
+            text_color="white",
+            corner_radius=10,
+            width=150,
+            height=30,
+            cursor="hand2",
+            command=lambda: self.ejecutar_guardar_pdf()).pack(side="left", padx=10)
         
         # Botón cancelar
         ctk.CTkButton(button_frame, 
@@ -200,26 +213,65 @@ class RestauranteApp:
         self.ventana_imprimir_ref = ventana
 
 
+    def ejecutar_guardar_pdf(self):
+        """
+        Ejecuta el guardado del menú en PDF
+        """
+        from Imprimir.imprimir_menu import guardar_menu_pdf
+        
+        # Abrir diálogo para elegir ubicación
+        ruta_archivo = filedialog.asksaveasfilename(
+            parent=self.ventana_imprimir_ref,
+            title="Guardar menú como PDF",
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
+            initialfile="menu_restaurante.pdf"
+        )
+        
+        if ruta_archivo:  # Si el usuario no canceló
+            try:
+                exito, mensaje = guardar_menu_pdf("Menú del Restaurante", ruta_archivo)
+                
+                if exito:
+                    messagebox.showinfo(
+                        "Éxito",
+                        f"PDF guardado correctamente en:\n{ruta_archivo}",
+                        parent=self.ventana_imprimir_ref
+                    )
+                else:
+                    messagebox.showerror(
+                        "Error",
+                        f"No se pudo guardar el PDF:\n{mensaje}",
+                        parent=self.ventana_imprimir_ref
+                    )
+            except Exception as e:
+                messagebox.showerror(
+                    "Error",
+                    f"Error al guardar PDF:\n{str(e)}",
+                    parent=self.ventana_imprimir_ref
+                )
+
+
     def ejecutar_impresion(self):
-            """
-            Ejecuta la impresión del menú
-            """
-            respuesta = messagebox.askyesno(
-                "Confirmar Impresión",
-                "¿Deseas imprimir el menú?",
-                parent=self.ventana_imprimir_ref
-            )
-            
-            if respuesta:
-                try:
-                    exito = imprimir_menu("Menú del Restaurante")
-                    
-                    if exito:
-                        if hasattr(self, 'ventana_imprimir_ref'):
-                            self.ventana_imprimir_ref.destroy()
-                        
-                except Exception as e:
-                    messagebox.showerror("Error", f"Error al imprimir:\n{str(e)}")
+        """
+        Ejecuta la impresión del menú
+        """
+        respuesta = messagebox.askyesno(
+            "Confirmar Impresión",
+            "¿Deseas imprimir el menú?",
+            parent=self.ventana_imprimir_ref
+        )
+        
+        if respuesta:
+            try:
+                exito = imprimir_menu("Menú del Restaurante")
+                
+                if exito:
+                    if hasattr(self, 'ventana_imprimir_ref'):
+                        self.ventana_imprimir_ref.destroy()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al imprimir:\n{str(e)}")
 
     # --- VENTANA DE PLATOS ---
     def ventana_platos(self):
@@ -280,16 +332,25 @@ class RestauranteApp:
         tk.Label(form, text="Categoría:", bg=COLOR_BG, fg=COLOR_TXT, anchor="w", font=(FUENTE_TXT, 12)).grid(row=3, column=0, sticky="w", pady=5)
         self.categorias = obtener_categorias()
         self.categorias_dict = {nombre: id_ for id_, nombre in self.categorias}
-        self.categoria_var = tk.StringVar()
-        self.categoria_cb = ttk.Combobox(
-            form,
-            textvariable=self.categoria_var,
+        self.categoria_var = ctk.StringVar()
+
+        # Combobox CTk simple
+        self.categoria_cb = ctk.CTkComboBox(
+            master=form,
+            variable=self.categoria_var,
             values=list(self.categorias_dict.keys()),
-            state="readonly",
-            width=35,
-            style="Modern.TCombobox"
+            width=185,       # más pequeño
+            height=23,       # compacto
+            corner_radius=0,
+            state="readonly", # NO puede escribir
+            fg_color="#FFFFFF", # gris claro simple
+            text_color=COLOR_TXT,
+            border_color="#A7A5A5",
+            border_width=1,
+            cursor="hand2",
         )
-        self.categoria_cb.grid(row=3, column=1, columnspan=2, pady=5, ipady=3)
+
+        self.categoria_cb.grid(row=3, column=1, columnspan=2, pady=5, padx=(43, 0), sticky="w")
 
         tk.Label(form, text="Imagen:", bg=COLOR_BG, fg=COLOR_TXT, anchor="w", font=(FUENTE_TXT, 12)).grid(row=4, column=0, sticky="w", pady=5)
         self.imagen_path = tk.StringVar()
@@ -398,25 +459,53 @@ class RestauranteApp:
                     cursor="hand2",
                     command=self.volver_menu_principal).pack(side="left", padx=8)
 
-        # Tabla
-        # Crear un estilo para la tabla
-        estilo = ttk.Style()
-        estilo.configure("Treeview", 
-                        font=('Inter', 12),  # Fuente para las filas
-                        rowheight=30)        # Altura de las filas (ajusta según el tamaño de fuente)
-
-        estilo.configure("Treeview.Heading", 
-                        font=('Inter', 13, 'bold'),
-                        foreground=COLOR_TXT)  # Fuente para los encabezados
+        # ====================================================================
+        # TABLA CON ESTILOS PERSONALIZADOS PARA CUSTOMTKINTER
+        # ====================================================================
         
-        estilo.map('Treeview',
-          background=[('selected', "#9D9D9E")],  # Color de fondo al seleccionar
-          foreground=[('selected', '#FFFFFF')]) 
+        # Frame contenedor para la tabla y scrollbar
+        tabla_frame = tk.Frame(frame, bg=COLOR_BG)
+        tabla_frame.pack(pady=10, padx=20, fill="both", expand=True)  # ← Agregado padx=20 para márgenes laterales
 
-        # Tabla
-        self.tabla = ttk.Treeview(frame, columns=("ID", "Nombre", "Descripción", "Precio", "Categoría", "Imagen"), show="headings", height=10)
+        # Configurar estilo de la tabla
+        estilo = ttk.Style()
+        estilo.theme_use("clam")
 
-        # Configurar cada columna con su propio tamaño
+        # Colores que combinan con CustomTkinter (mismos que categorías)
+        estilo.configure("Custom.Treeview",
+                        background="#FFFFFF",
+                        foreground="#333333",
+                        fieldbackground="#FFFFFF",
+                        borderwidth=1,
+                        font=(FUENTE_TXT, 12),
+                        rowheight=30)
+
+        estilo.configure("Custom.Treeview.Heading",
+                        background=COLOR_BTN,          # #14b0ab (turquesa)
+                        foreground="white",
+                        borderwidth=1,
+                        relief="flat",
+                        font=(FUENTE_TXT, 13, 'bold'))
+
+        # Colores cuando seleccionas una fila
+        estilo.map('Custom.Treeview',
+                background=[('selected', COLOR_ACCENT)],   # #ff825a (naranja)
+                foreground=[('selected', 'white')])
+
+        # Color cuando pasas el mouse sobre el encabezado
+        estilo.map('Custom.Treeview.Heading',
+                background=[('active', '#119b97')])        # Un poco más oscuro que COLOR_BTN
+
+        # Crear Treeview con el estilo personalizado
+        self.tabla = ttk.Treeview(
+            tabla_frame,
+            columns=("ID", "Nombre", "Descripción", "Precio", "Categoría", "Imagen"),
+            show="headings",
+            height=10,
+            style="Custom.Treeview"
+        )
+
+        # Configurar columnas
         self.tabla.heading("ID", text="ID")
         self.tabla.column("ID", anchor="center", width=50, minwidth=50)
 
@@ -435,7 +524,12 @@ class RestauranteApp:
         self.tabla.heading("Imagen", text="Imagen")
         self.tabla.column("Imagen", anchor="center", width=150, minwidth=100)
 
-        self.tabla.pack(pady=10)
+        # Scrollbar personalizada con CustomTkinter
+        scrollbar = ctk.CTkScrollbar(tabla_frame, command=self.tabla.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.tabla.configure(yscrollcommand=scrollbar.set)
+
+        self.tabla.pack(side="left", fill="both", expand=True)
         self.tabla.bind("<<TreeviewSelect>>", self.seleccionar_tabla)
 
         self.cargar_tabla()

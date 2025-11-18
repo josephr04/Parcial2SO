@@ -164,22 +164,48 @@ class CategoriaGUI:
                 cursor="hand2",
                 command=self.volver).pack(side="left", padx=8)
 
+        # Frame contenedor para la tabla y scrollbar
+        tabla_frame = tk.Frame(self.root, bg=COLOR_BG)
+        tabla_frame.pack(padx=80, pady=(20, 50), fill="both", expand=True)
+
         # Crear un estilo para la tabla
         estilo = ttk.Style()
-        estilo.configure("Treeview", 
-                        font=('Inter', 12),  # Fuente para las filas
-                        rowheight=30)        # Altura de las filas
+        estilo.theme_use("clam")
 
-        estilo.configure("Treeview.Heading", 
-                        font=('Inter', 13, 'bold'),
-                        foreground="#333")  # Fuente para los encabezados
+        # Colores que combinan con CustomTkinter
+        estilo.configure("Custom.Treeview",
+                        background="#FFFFFF",
+                        foreground="#333333",
+                        fieldbackground="#FFFFFF",
+                        borderwidth=1,
+                        font=('Inter', 12),
+                        rowheight=30)
 
-        estilo.map('Treeview',
-                background=[('selected', "#9D9D9E")],  # Color de fondo al seleccionar
-                foreground=[('selected', '#FFFFFF')])   # Color de texto al seleccionar
+        estilo.configure("Custom.Treeview.Heading",
+                        background=COLOR_BTN,          # #4ECDC4
+                        foreground="white",
+                        borderwidth=1,
+                        relief="flat",
+                        font=('Inter', 13, 'bold'))
 
+        # Colores cuando seleccionas una fila
+        estilo.map('Custom.Treeview',
+                background=[('selected', COLOR_ACC)],   # #FF6B6B
+                foreground=[('selected', 'white')])
+
+        # Color cuando pasas el mouse sobre el encabezado
+        estilo.map('Custom.Treeview.Heading',
+                background=[('active', '#3db5ad')])
+
+        # Crear Treeview
         cols = ("ID", "Nombre", "Imagen")
-        self.tree = ttk.Treeview(self.root, columns=cols, show="headings", height=10)
+        self.tree = ttk.Treeview(
+            tabla_frame,                    # ← Ahora dentro del frame contenedor
+            columns=cols, 
+            show="headings", 
+            height=10,
+            style="Custom.Treeview"
+        )
 
         # Configurar cada columna con encabezados y tamaños
         self.tree.heading("ID", text="ID")
@@ -191,7 +217,13 @@ class CategoriaGUI:
         self.tree.heading("Imagen", text="Imagen")
         self.tree.column("Imagen", anchor="center", width=350, minwidth=150)
 
-        self.tree.pack(padx=80, pady=(20, 50), fill="both", expand=True)
+        # Scrollbar personalizada con CustomTkinter
+        scrollbar = ctk.CTkScrollbar(tabla_frame, command=self.tree.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        # Empaquetar tabla
+        self.tree.pack(side="left", fill="both", expand=True)
         self.tree.bind("<<TreeviewSelect>>", self.seleccionar)
 
     def seleccionar_imagen(self):
