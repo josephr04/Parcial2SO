@@ -35,13 +35,13 @@ La aplicación sigue el patrón de diseño **MVC (Modelo–Vista–Controlador)*
 2. Instala las librerías especificadas
 3. Inicia apache y MySQL en la aplicación de XAMM y entra a la página 
 de phpMyAdmin. 
-4. En phpMyAdmin importa la base de datos llamada **restaurante.db** que 
+4. En phpMyAdmin importa la base de datos llamada **restaurante.sql** que 
 se encuentra dentro de la carpeta raíz del proyecto.
 5. Inicia la aplicación desde el archivo **main** en VS Code.
 
 ## Colaboradores
-- [@Jorge Vanegas](https://github.com/Vanegas25)
-- [@josephrosas](https://github.com/josephr04)
+- [@Vanegas25](https://github.com/Vanegas25)
+- [@josephr04](https://github.com/josephr04)
 - [@Moises507](https://github.com/MangoDingo)
 
 ## Pantallas
