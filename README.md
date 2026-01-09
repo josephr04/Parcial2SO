@@ -31,8 +31,8 @@ La aplicación sigue el patrón de diseño **MVC (Modelo–Vista–Controlador)*
 - Generar reportes e imprimirlos o guardarlos en PDF
 
 ## Cómo Ejecutar la Aplicación: 
-1. Descarga el proyecto y abre VS Code
-2. Instala las librerías especificadas
+1. Descarga el proyecto y abre VS Code.
+2. Instala las librerías especificadas.
 3. Inicia apache y MySQL en la aplicación de XAMM y entra a la página 
 de phpMyAdmin. 
 4. En phpMyAdmin importa la base de datos llamada **restaurante.sql** que 
