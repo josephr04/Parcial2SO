@@ -26,9 +26,9 @@ La aplicación sigue el patrón de diseño **MVC (Modelo–Vista–Controlador)*
   Manejo de la lógica de negocio, navegación entre pantallas y validaciones.
 
 ## Funciones Principales
-- Crear, editar y eliminar platos
-- Crear, editar y eliminar menús
-- Generar reportes e imprimirlos o guardarlos en PDF
+- Crear, editar y eliminar platos.
+- Crear, editar y eliminar menús.
+- Generar reportes e imprimirlos o guardarlos en PDF.
 
 ## Cómo Ejecutar la Aplicación: 
 1. Descarga el proyecto y abre VS Code.
