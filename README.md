@@ -5,13 +5,13 @@ Los módulos de plato y menú permiten crear, editar y eliminar datos e incluyen
 El módulo de reportes permite imprimir los menús con sus respectivos platos y precios correspondientes, también incluye la opción de guardar una copia PDF en la dirección especificada.
 
 ## Herramientas y Tecnologías
-- **Visual Studio Code**: Entorno de desarrollo
-- **Python**: Lenguaje de programación principal
-- **phpMyAdmin**: Base de datos local para el manejo de datos
-- **mysql-connector-python**: Librería para manejar la conexión con la base de datos
-- **CustomTkinter**: Framework de diseño que permite crear interfaces modernas 
-- **Pillow**: Librería para el manejo de imágenes
-- **Shutil**: Módulo para gestionar los archivos del sistema operativo
+- **Visual Studio Code**: Entorno de desarrollo.
+- **Python**: Lenguaje de programación principal.
+- **phpMyAdmin**: Base de datos local para el manejo de datos.
+- **mysql-connector-python**: Librería para manejar la conexión con la base de datos.
+- **CustomTkinter**: Framework de diseño que permite crear interfaces modernas.
+- **Pillow**: Librería para el manejo de imágenes.
+- **Shutil**: Módulo para gestionar los archivos del sistema operativo.
 
 ## Arquitectura de la Aplicación
 La aplicación sigue el patrón de diseño **MVC (Modelo–Vista–Controlador)**:
