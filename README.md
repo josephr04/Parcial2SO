@@ -17,7 +17,7 @@ El módulo de reportes permite imprimir los menús con sus respectivos platos y 
 La aplicación sigue el patrón de diseño **MVC (Modelo–Vista–Controlador)**:
 
 - **Modelo**:  
-  Clases que representan los datos del sistema.
+  Clases que representan los datos del sistema
 
 - **Vista**:  
   Actividades y fragmentos encargados de mostrar la interfaz de usuario.
